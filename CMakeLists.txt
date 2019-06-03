@@ -9,14 +9,15 @@ add_compile_options(-std=c++11)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
 
-
+  actionlib_msgs
   geometry_msgs
   roscpp
   message_generation
+  moveit_ros_planning_interface
 )
 
 ## System dependencies are found with CMake's conventions
-# find_package(Boost REQUIRED COMPONENTS system)
+ find_package(Boost REQUIRED)
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -63,17 +64,17 @@ find_package(catkin REQUIRED COMPONENTS
  )
 
 ## Generate actions in the 'action' folder
-# add_action_files(
-#   FILES
-#   Action1.action
+ add_action_files(
+   FILES
+   Grasp.action
 #   Action2.action
-# )
+ )
 
 ## Generate added messages and services with any dependencies listed here
  generate_messages(
-   DEPENDENCIES
-#   move_base_msgs
+   DEPENDENCIES 
    geometry_msgs
+   actionlib_msgs
 
  )
 
@@ -107,9 +108,9 @@ find_package(catkin REQUIRED COMPONENTS
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
+   INCLUDE_DIRS include
 #  LIBRARIES simple_navigation_goals
-#  CATKIN_DEPENDS actionlib move_base_msgs roscpp
+   CATKIN_DEPENDS actionlib_msgs geometry_msgs 
    DEPENDS message_runtime
 )
 
@@ -120,14 +121,14 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-# include
+  include
   ${catkin_INCLUDE_DIRS}
+  ${BOOST_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
-# add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/simple_navigation_goals.cpp
-# )
+add_library(tutorial5 src/Grasp.cpp)
+target_link_libraries(tutorial5 ${catkin_LIBRARIES} ${roscpp_LIBRARIES})
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -198,7 +199,7 @@ include_directories(
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()
-#add_executable(simple_navigation_goals src/simple_navigation_goals.cpp)
-#target_link_libraries(simple_navigation_goals ${catkin_LIBRARIES})
+#add_executable(Grasp src/Grasp.cpp)
+#target_link_libraries(Grasp ${catkin_LIBRARIES})
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
