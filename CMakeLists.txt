@@ -8,9 +8,11 @@ add_compile_options(-std=c++11)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  actionlib
-  move_base_msgs
+
+
+  geometry_msgs
   roscpp
+  message_generation
 )
 
 ## System dependencies are found with CMake's conventions
@@ -69,8 +71,10 @@ find_package(catkin REQUIRED COMPONENTS
 
 ## Generate added messages and services with any dependencies listed here
  generate_messages(
-#   DEPENDENCIES
+   DEPENDENCIES
 #   move_base_msgs
+   geometry_msgs
+
  )
 
 ################################################
@@ -106,7 +110,7 @@ catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES simple_navigation_goals
 #  CATKIN_DEPENDS actionlib move_base_msgs roscpp
-#  DEPENDS system_lib
+   DEPENDS message_runtime
 )
 
 ###########
