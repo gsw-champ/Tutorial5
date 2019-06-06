@@ -46,10 +46,14 @@ int main(int argc, char** argv) {
     r.sleep();
   }
 
-  ros::Publisher pub = n.advertise<geometry_msgs::Twist>("/mobile_base_controller/cmd_vel", 1);
+  ros::Subscriber sub = n.subscribe(ready_to_move);
+  void TurtleClass::getTiagoPose(const nav_msgs::Odometry::ConstPtr& msg)
+
+      ros::Publisher pub = n.advertise<geometry_msgs::Twist>(
+          "/mobile_base_controller/cmd_vel", 1);
   msg.angular.z = 0.5;
   ros::Time start = ros::Time::now();
-  while((ros::Time::now() - start) < ros::Duration(10)){
+  while ((ros::Time::now() - start) < ros::Duration(10)) {
     pub.publish(msg);
     ROS_INFO("Localizing...");
   }
@@ -82,45 +86,55 @@ int main(int argc, char** argv) {
   point2.orientation.w = 0.216;
   points.push_back(point2);
 
-  geometry_msgs::Pose point3;
-  point3.position.x = -1.0;
-  point3.position.y = -12.0213;
-  point3.position.z = 0;
-  point3.orientation.x = 0;
-  point3.orientation.y = 0;
-  point3.orientation.z = 0;
-  point3.orientation.w = 1;
-  points.push_back(point3);
-
   move_base_msgs::MoveBaseGoal goal;
   // set target pose frame of coordinates
   goal.target_pose.header.frame_id = "map";
 
-// 加一个判断条件，如果tiago拿起物体，则移动到下一个位置
+  // 加一个判断条件，如果tiago拿起物体，则移动到下一个位置
 
-
-  int i = 0;
   while (ros::ok()) {
-    if (i < points.size()) {
+    // if (i < points.size()) {
+    int i = 0;
+    goal.target_pose.header.stamp = ros::Time::now();
+    goal.target_pose.pose = points.at(i);
+    ROS_INFO("Sending goal table");
+    // send goal and register callback handler
+    ac.sendGoal(goal, &doneCb, &activeCb);  // &feedbackCb
+    ac.waitForResult();                     // wait for goal result
+
+    if (ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED) {
+      ROS_INFO("The base successfully moved to table A");
+
+    } else {
+      ROS_INFO("The base failed to move to table A");
+      continue;
+    }
+
+    //判断条件，机器人拿起东西放好
+    if (ready_to_move) {
+      i = 1;
       goal.target_pose.header.stamp = ros::Time::now();
       goal.target_pose.pose = points.at(i);
-      ROS_INFO("Sending goal %d", i + 1);
+      ROS_INFO("Sending goal table");
       // send goal and register callback handler
       ac.sendGoal(goal, &doneCb, &activeCb);  // &feedbackCb
       ac.waitForResult();                     // wait for goal result
 
       if (ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED) {
-        ROS_INFO("The base successfully moved to goal %d", i + 1);
-        i++;
+        ROS_INFO("The base successfully moved to table B");
+
+        pub.publish();
+
       } else {
-        ROS_INFO("The base failed to move to goal %d for some reason", i + 1);
+        ROS_INFO("The base failed to move to table B");
         continue;
       }
-
-    } else {
-      i = 0;
-      continue;
     }
+
+    // } else {
+    //   i = 0;
+    //   continue;
+    // }
   }
   return 0;
 }

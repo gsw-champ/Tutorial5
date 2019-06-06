@@ -52,23 +52,22 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate messages in the 'msg' folder
  add_message_files(
    FILES
-   Rect.msg
-   Point.msg
+
  )
 
 ## Generate services in the 'srv' folder
  add_service_files(
    FILES
-   Grasp.srv
+
 #   Service2.srv
  )
 
 ## Generate actions in the 'action' folder
- add_action_files(
-   FILES
-   Grasp.action
+# add_action_files(
+#   FILES
+#   Grasp.action
 #   Action2.action
- )
+# )
 
 ## Generate added messages and services with any dependencies listed here
  generate_messages(
@@ -127,7 +126,7 @@ include_directories(
 )
 
 ## Declare a C++ library
-add_library(tutorial5 src/Grasp.cpp)
+add_library(tutorial5 src/navi.cpp)
 target_link_libraries(tutorial5 ${catkin_LIBRARIES} ${roscpp_LIBRARIES})
 
 ## Add cmake target dependencies of the library
