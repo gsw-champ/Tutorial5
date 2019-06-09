@@ -19,7 +19,7 @@ void doneCb(const actionlib::SimpleClientGoalState& state,
 void activeCb() { ROS_INFO("Goal just went active"); }
 
 int main(int argc, char** argv) {
-  ros::init(argc, argv, "simple_navigation_goals");
+  ros::init(argc, argv, "navi");
   ros::NodeHandle n;
   ros::Rate r(10);
 
@@ -54,12 +54,7 @@ int main(int argc, char** argv) {
     ROS_INFO("Localizing...");
   }
 
-  // if (ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
-  //   ROS_INFO("The base moved to initial point");
-  // else
-  //   ROS_INFO("The base failed to moved to initial point for some reason");
 
-  // vector of goals, with position and orientation
   std::vector<geometry_msgs::Pose> points;
 
   geometry_msgs::Pose point1;
@@ -82,15 +77,6 @@ int main(int argc, char** argv) {
   point2.orientation.w = 0.216;
   points.push_back(point2);
 
-  geometry_msgs::Pose point3;
-  point3.position.x = -1.0;
-  point3.position.y = -12.0213;
-  point3.position.z = 0;
-  point3.orientation.x = 0;
-  point3.orientation.y = 0;
-  point3.orientation.z = 0;
-  point3.orientation.w = 1;
-  points.push_back(point3);
 
   move_base_msgs::MoveBaseGoal goal;
   // set target pose frame of coordinates

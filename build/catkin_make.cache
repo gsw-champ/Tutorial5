@@ -1,0 +1,2 @@
+navi
+-DCATKIN_DEVEL_PREFIX=/home/athomess19/Tutorial5/devel -DCMAKE_INSTALL_PREFIX=/home/athomess19/Tutorial5/install -G Unix Makefiles

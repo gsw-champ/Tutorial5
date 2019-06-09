@@ -1,0 +1,8 @@
+prefix=/home/athomess19/Tutorial5/devel
+
+Name: navi
+Description: Description of navi
+Version: 0.0.0
+Cflags: 
+Libs: -L/home/athomess19/Tutorial5/devel/lib 
+Requires: actionlib move_base_msgs roscpp geometry_msgs std_srvs moveit_ros_planning_interface
