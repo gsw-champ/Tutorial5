@@ -1,5 +1,0 @@
-geometry_msgs/PointStamped goal
----
-
----
-geometry_msgs/PoseStamped hand_pose
