@@ -36,8 +36,8 @@ int main(int argc, char** argv) {
     ROS_INFO("Waiting for the move_base action server to come up");
   }
 
-  ros::ServiceClient client =
-      n.serviceClient<std_msgs::Bool>("ReachedTable");
+  // ros::ServiceClient client =
+  //    n.serviceClient<std_msgs::Bool>("ReachedTable");
 
   ros::ServiceClient client_global =
       n.serviceClient<std_srvs::Empty>("/global_localization");
@@ -53,9 +53,9 @@ int main(int argc, char** argv) {
       n.advertise<geometry_msgs::Twist>("/mobile_base_controller/cmd_vel", 1);
   msg.angular.z = 0.5;
   ros::Time start = ros::Time::now();
-  while ((ros::Time::now() - start) < ros::Duration(10)) {
+  while ((ros::Time::now() - start) < ros::Duration(25)) {
     pub.publish(msg);
-    ROS_INFO("Localizing...");
+//    ROS_INFO("Localizing...");
   }
 
   std::vector<geometry_msgs::Pose> points;
@@ -81,8 +81,11 @@ int main(int argc, char** argv) {
   points.push_back(point2);
 
   move_base_msgs::MoveBaseGoal goal;
+
   // set target pose frame of coordinates
   goal.target_pose.header.frame_id = "map";
+
+
 
   int i = 0;
   while (ros::ok()) {

@@ -10,7 +10,7 @@
   <arg name="mapping"        default="karto"/>
   <arg name="octomap"        default="false"/>
   <arg name="disable_vo"     default="false"/>
-  <arg name="public_sim"     default="false"/>
+  <arg name="public_sim"     default="true"/>
   <arg name="rgbd_sensors"   default="false"/>
   <arg name="tf_prefix"      default=""/>
   <arg name="multiple"       default="false"/>
@@ -44,10 +44,8 @@
     <include file="$(find pal_vo_server)/launch/vo_server.launch"/>
   </group>
 
-  <include file="$(find tiago_laser_sensors)/launch/rgbd_cloud_laser.launch">
-    <arg name="cloud" value="/xtion/depth_registered/points"/>
-  </include>
 
   <node name="navi" pkg="navi" type="navi" output="screen"/>
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find navi)/configs/navi.rviz"/>
 
 </launch>
