@@ -18,8 +18,6 @@ void doneCb(const actionlib::SimpleClientGoalState& state,
 // callback function, called once when the goal becomes active
 void activeCb() { ROS_INFO("Goal just went active"); }
 
-// Callback function, called every time feedback is received for the goal
-
 void feedbackCb(const move_base_msgs::MoveBaseFeedbackConstPtr& feedback) {
   ROS_INFO("[X]:%f [Y]:%f [W]: %f [Z]: %f",
            feedback->base_position.pose.position.x,
@@ -29,7 +27,7 @@ void feedbackCb(const move_base_msgs::MoveBaseFeedbackConstPtr& feedback) {
 }
 
 int main(int argc, char** argv) {
-  ros::init(argc, argv, "navi");
+  ros::init(argc, argv, "simple_navigation_goals");
   ros::NodeHandle n;
   ros::Rate r(10);
 
@@ -46,9 +44,6 @@ int main(int argc, char** argv) {
     ROS_INFO("Waiting for the move_base action server to come up");
   }
 
-  // ros::ServiceClient client =
-  //    n.serviceClient<std_msgs::Bool>("ReachedTable");
-
   ros::ServiceClient client_global =
       n.serviceClient<std_srvs::Empty>("/global_localization");
   ros::ServiceClient client_clear =
@@ -59,41 +54,28 @@ int main(int argc, char** argv) {
     r.sleep();
   }
 
-  ros::Publisher pub =
-      n.advertise<geometry_msgs::Twist>("/mobile_base_controller/cmd_vel", 1);
-  msg.angular.z = 0.5;
+
+  ros::Publisher pub = n.advertise<geometry_msgs::Twist>("/mobile_base_controller/cmd_vel", 1);
+  msg.angular.z = 0.7;
   ros::Time start = ros::Time::now();
-  while ((ros::Time::now() - start) < ros::Duration(25)) {
+  while((ros::Time::now() - start) < ros::Duration(25)){
     pub.publish(msg);
-    //    ROS_INFO("Localizing...");
+    ROS_INFO("Localizing...");
   }
 
-   while (!client_clear.call(client_srv)) {
-     ROS_INFO("Clear costmaps.");
-     r.sleep();
-   }
 
+  while (!client_clear.call(client_srv)) {
+    ROS_INFO("Wait for global_localization.");
+    r.sleep();
+  }
+
+  // if (ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
+  //   ROS_INFO("The base moved to initial point");
+  // else
+  //   ROS_INFO("The base failed to moved to initial point for some reason");
+
+  // vector of goals, with position and orientation
   std::vector<geometry_msgs::Pose> points;
-
-  // geometry_msgs::Pose point1;
-  // point1.position.x = -0.896;
-  // point1.position.y = 2.396;
-  // point1.position.z = 0.000;
-  // point1.orientation.x = 0;
-  // point1.orientation.y = 0;
-  // point1.orientation.z = 0.55;
-  // point1.orientation.w = 0.835;
-  // points.push_back(point1);
-
-  // geometry_msgs::Pose point2;
-  // point2.position.x = -1.77;
-  // point2.position.y = 2.907;
-  // point2.position.z = 0.000;
-  // point2.orientation.x = 0;
-  // point2.orientation.y = 0;
-  // point2.orientation.z = 0.562;
-  // point2.orientation.w = 0.827;
-  // points.push_back(point2);
 
   geometry_msgs::Pose point1;
   point1.position.x = -2.941;
@@ -115,8 +97,17 @@ int main(int argc, char** argv) {
   point2.orientation.w = 0.216;
   points.push_back(point2);
 
-  move_base_msgs::MoveBaseGoal goal;
+  geometry_msgs::Pose point3;
+  point3.position.x = -1.0;
+  point3.position.y = -12.0213;
+  point3.position.z = 0;
+  point3.orientation.x = 0;
+  point3.orientation.y = 0;
+  point3.orientation.z = 0;
+  point3.orientation.w = 1;
+  points.push_back(point3);
 
+  move_base_msgs::MoveBaseGoal goal;
   // set target pose frame of coordinates
   goal.target_pose.header.frame_id = "map";
 

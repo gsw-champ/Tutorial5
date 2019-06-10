@@ -10,7 +10,7 @@
   <arg name="mapping"        default="karto"/>
   <arg name="octomap"        default="false"/>
   <arg name="disable_vo"     default="false"/>
-  <arg name="public_sim"     default="true"/>
+  <arg name="public_sim"     default="True"/>
   <arg name="rgbd_sensors"   default="false"/>
   <arg name="tf_prefix"      default=""/>
   <arg name="multiple"       default="false"/>
