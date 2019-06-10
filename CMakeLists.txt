@@ -16,6 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
   moveit_ros_planning_interface
   tf
   control_msgs
+  trajectory_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -112,7 +113,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
    INCLUDE_DIRS include
 #  LIBRARIES simple_navigation_goals
-   CATKIN_DEPENDS actionlib_msgs geometry_msgs control_msgs
+   CATKIN_DEPENDS actionlib_msgs geometry_msgs control_msgs trajectory_msgs
    DEPENDS message_runtime
 )
 

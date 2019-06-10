@@ -63,24 +63,33 @@ void GraspClass::prepare_robot(){
 
 void GraspClass::lift_torso(){
     ROS_INFO("Moving torso up");
-    moveit::planning_interface::MoveGroupInterface torso_lift("arm_torso");
+    // moveit::planning_interface::MoveGroupInterface torso_lift("arm_torso");
 
-    torso_lift.setPlannerId("SBLkConfigDefault");
-    torso_lift.setStartStateToCurrentState();
-    torso_lift.setMaxVelocityScalingFactor(1.0);
-    torso_lift.setJointValueTarget("torso_lift_joint", 0.35);
+    // torso_lift.setPlannerId("SBLkConfigDefault");
+    // torso_lift.setStartStateToCurrentState();
+    // torso_lift.setMaxVelocityScalingFactor(1.0);
+    // torso_lift.setJointValueTarget("torso_lift_joint", 0.35);
 
-    moveit::planning_interface::MoveGroupInterface::Plan my_plan;
-    torso_lift.setPlanningTime(5.0);
-    bool success;
-    success = bool(torso_lift.plan(my_plan));
-    if ( !success )
-        throw std::runtime_error("No plan found");
+    // moveit::planning_interface::MoveGroupInterface::Plan my_plan;
+    // torso_lift.setPlanningTime(5.0);
+    // bool success;
+    // success = bool(torso_lift.plan(my_plan));
+    // if ( !success )
+    //     throw std::runtime_error("No plan found");
 
-    moveit::planning_interface::MoveItErrorCode e=torso_lift.move();
-    if(!e){
-        throw std::runtime_error("Can't finish");
-    }
+    // moveit::planning_interface::MoveItErrorCode e=torso_lift.move();
+    // if(!e){
+    //     throw std::runtime_error("Can't finish");
+    // }
+
+    trajectory_msgs::JointTrajectory jt;
+    trajectory_msgs::JointTrajectoryPoint jtp;
+    jt.joint_names.push_back("torso_lift_joint");
+    jtp.positions.push_back(0.34);
+    jtp.time_from_start = ros::Duration(2);
+    jt.points.push_back(jtp);
+    lift_torso_.publish(jt);
+
     ROS_INFO("Torso lift done!");
 }
 
