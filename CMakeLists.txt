@@ -14,6 +14,8 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   message_generation
   moveit_ros_planning_interface
+  tf
+  control_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -110,7 +112,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
    INCLUDE_DIRS include
 #  LIBRARIES simple_navigation_goals
-   CATKIN_DEPENDS actionlib_msgs geometry_msgs 
+   CATKIN_DEPENDS actionlib_msgs geometry_msgs control_msgs
    DEPENDS message_runtime
 )
 
@@ -121,6 +123,7 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
+  include ${catkin_INCLUDE_DIRS}
   include
   ${catkin_INCLUDE_DIRS}
   ${BOOST_INCLUDE_DIRS}
@@ -203,3 +206,20 @@ target_link_libraries(tutorial5 ${catkin_LIBRARIES} ${roscpp_LIBRARIES})
 #target_link_libraries(Grasp ${catkin_LIBRARIES})
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+
+
+add_executable(Grasp_node
+  src/Grasp_node.cpp
+)
+add_dependencies(Grasp_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(Grasp_node
+  ${catkin_LIBRARIES} tutorial5
+)
+
+add_executable(test_node
+  src/test.cpp
+)
+add_dependencies(test_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(test_node
+  ${catkin_LIBRARIES}
+)
