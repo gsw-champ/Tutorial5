@@ -63,10 +63,12 @@ class From2Dto3D
 
       tf::TransformListener listener_;
       // rosrun tf tf_echo /xtion_rgb_optical_frame /base_link
-      int temp, Object_num = 10, CenterPoints[2];
-      geometry_msgs::Point point3D;
-
-
+      string type_obj, class_obj;
+      int temp, CenterPoints[2];
+      int Object_num;
+      geometry_msgs::PointStamped point3D;
+      geometry_msgs::PointStamped point3D_base;
+      geometry_msgs::PointStamped base_point;
 
       //------------------ Callbacks -------------------
 
@@ -74,7 +76,7 @@ class From2Dto3D
       void processCloud(const sensor_msgs::PointCloud2ConstPtr& pc);
       //! Process bounding boxes
       void processBoundingBoxes(const darknet_ros_msgs::BoundingBoxesConstPtr& r);
-      void transformPoint(const tf::TransformListener& listener);
+      geometry_msgs::PointStamped transformPoint(const tf::TransformListener& listener, const geometry_msgs::PointStamped laser_point);
 
     public:
       //! Subscribes to and advertises topics
@@ -88,7 +90,7 @@ class From2Dto3D
         // Publishers
         // format:
         //pub_name = nh_.advertise< Type >("topic", queuesize);
-        pub_point3D = nh_.advertise< geometry_msgs::Point >("/segmentation/point3D", 10);
+        pub_point3D = nh_.advertise< geometry_msgs::PointStamped >("/segmentation/point3D", 10);
         ROS_INFO("from2Dto3D initialized ...");
 
       }
@@ -112,106 +114,118 @@ void From2Dto3D::processBoundingBoxes(const darknet_ros_msgs::BoundingBoxesConst
     // bounding_boxes: Class: "bottle", probability: 0.953633725643, xmin: 261, ymin: 60, xmax: 335, ymax: 315.
     //ros::Duration(5).sleep();
 
-    if (Object_num == 10)
-    {
-        std::cout << " There are " << r->bounding_boxes.size() << " objects on the table." << endl;
-        for(int j = 0; j < r->bounding_boxes.size(); j++ )
-        {
-          std::cout << " Number " << j << " is " << r->bounding_boxes[j].Class << endl;
-        }
-        std::cout << " Object to recognize, Please enter the object's number: " << endl;
-        std::cin >> temp;
-        Object_num = temp;
-        while( temp >= r->bounding_boxes.size())
-        {
-          std::cout << " The object's number is wrong, please enter the new number: \n"
-                    << "the current Object_num/temp is: " << temp << endl;
-          std::cin >> temp;
-          Object_num = temp;
-        }
-    }
+//    if (Object_num == 10)
+//    {
+//        std::cout << " There are " << r->bounding_boxes.size() << " objects on the table." << endl;
+//        for(int j = 0; j < r->bounding_boxes.size(); j++ )
+//        {
+//          std::cout << " Number " << j << " is " << r->bounding_boxes[j].Class << endl;
+//        }
+//        std::cout << " Object to recognize, Please enter the object's number: " << endl;
+//        std::cin >> temp;
+//        Object_num = temp;
+//        while( temp >= r->bounding_boxes.size())
+//        {
+//          std::cout << " The object's number is wrong, please enter the new number: \n"
+//                    << "the current Object_num/temp is: " << temp << endl;
+//          std::cin >> temp;
+//          Object_num = temp;
+//        }
+//    }
 
     // while( pc_point3D.isOrganized() )
+
+    Object_num = r->bounding_boxes.size();
+
     if (pc_point3D.isOrganized() != 1)
     {
         ROS_INFO_STREAM(" Point Cloud is not organized, waiting... ");
     }
     else
     {
-        CenterPoints[0] = int ((r->bounding_boxes[Object_num].xmin + r->bounding_boxes[Object_num].xmax) / 2 );
-        CenterPoints[1] = int ((r->bounding_boxes[Object_num].ymin + r->bounding_boxes[Object_num].ymax) / 2 );
+        ROS_INFO_STREAM("There are " << Object_num << " in this picture:");
+        ROS_INFO_STREAM("They are: ");
 
-        point3D.x = pc_point3D.at(CenterPoints[0], CenterPoints[1]).x;
-        point3D.y = pc_point3D.at(CenterPoints[0], CenterPoints[1]).y;
-        point3D.z = pc_point3D.at(CenterPoints[0], CenterPoints[1]).z;
-
-        while (isnan(pc_point3D.at(CenterPoints[0], CenterPoints[1]).x))
-        {
-            float d = -0.5;
-            //int d = -20;
-            CenterPoints[0] = CenterPoints[0] + d;
-            //CenterPoints[1] = CenterPoints[1] + d;
-            d = d + 0.1;
-            //std::cout << " JUST CHECK IF ENTER THE WHILE  " << endl;
-            //std::cout << " CenterPoints[0] = " << CenterPoints[0] << endl;
-            //std::cout << " CenterPoints[1] = " << CenterPoints[1] << endl;
-            if ( d == 0.5 )
-            {
-                //std::cout << " d = " << d;
-                break;
-            }
+        for (int i_obj = 0; i_obj < Object_num; i_obj++) {
+          ROS_INFO_STREAM(r->bounding_boxes[i_obj].Class);
         }
+
+        //std::cin >> class_obj;
+        class_obj = "bottle";
+
+        for (int j_obj = 0; j_obj < Object_num; j_obj++) {
+              type_obj = r->bounding_boxes[j_obj].Class;
+
+              if (!type_obj.compare(class_obj)) {
+
+                    CenterPoints[0] = int ((r->bounding_boxes[j_obj].xmin +
+                                            r->bounding_boxes[j_obj].xmax) / 2 );
+                    CenterPoints[1] = int ((r->bounding_boxes[j_obj].ymin +
+                                            r->bounding_boxes[j_obj].ymax) / 2 );
+
+                    point3D.point.x = pc_point3D.at(CenterPoints[0], CenterPoints[1]).x;
+                    point3D.point.y = pc_point3D.at(CenterPoints[0], CenterPoints[1]).y;
+                    point3D.point.z = pc_point3D.at(CenterPoints[0], CenterPoints[1]).z;
+
+                    while (isnan(pc_point3D.at(CenterPoints[0], CenterPoints[1]).x))
+                    {
+                        float d = -0.5;
+                        //int d = -20;
+                        CenterPoints[0] = CenterPoints[0] + d;
+                        //CenterPoints[1] = CenterPoints[1] + d;
+                        d = d + 0.1;
+                            if ( d == 0.5 )
+                             {
+                                //std::cout << " d = " << d;
+                                break;
+                             }
+                     }
         //std::cout << " CenterPoints[0] = " << CenterPoints[0] << endl;
 
-        point3D.x = pc_point3D.at(CenterPoints[0], CenterPoints[1]).x;
-        point3D.y = pc_point3D.at(CenterPoints[0], CenterPoints[1]).y;
-        point3D.z = pc_point3D.at(CenterPoints[0], CenterPoints[1]).z;
+                    point3D.point.x = pc_point3D.at(CenterPoints[0], CenterPoints[1]).x;
+                    point3D.point.y = pc_point3D.at(CenterPoints[0], CenterPoints[1]).y;
+                    point3D.point.z = pc_point3D.at(CenterPoints[0], CenterPoints[1]).z;
+                    point3D.header.frame_id = pc_point3D.header.frame_id;
+                    point3D_base = transformPoint(listener_, point3D);
+                    //point3D_base.header.frame_id = pc_point3D.header.frame_id;
+                    pub_point3D.publish(point3D_base);
+                    //pub_point3D.publish(point3D);
 
-        pub_point3D.publish(point3D);
+                    ROS_INFO_STREAM("The 3D coordinate of " << type_obj
+                                    << " is x: " << point3D.point.x
+                                    << " y: " << point3D.point.y
+                                    << " z: " << point3D.point.z
+                                    << " x': " << point3D_base.point.x
+                                    << " y': " << point3D_base.point.y
+                                    << " z': " << point3D_base.point.z);
 
-        std::cout << " The Number " << Object_num
-                  << " " << r->bounding_boxes[Object_num].Class
-                  << ":  CenterPoints[0] : " << CenterPoints[0]
-                  << "   CenterPoints[1] : " << CenterPoints[1]
-                  << " \n \t \t    position is x: " << point3D.x
-                  << "  y: " << point3D.y
-                  << "  z: " << point3D.z << endl;
-    }
+//                    std::cout  << " The Number " << Object_num
+//                               << " " << r->bounding_boxes[Object_num].Class
+//                               << ":  CenterPoints[0] : " << CenterPoints[0]
+//                               << "   CenterPoints[1] : " << CenterPoints[1]
+//                               << " \n \t \t    position is x: " << point3D.point.x
+//                               << "  y: " << point3D.point.y
+//                               << "  z: " << point3D.point.z
+//                               << " \n \t \t   base_link position is x' : " << point3D_base.point.x
+//                               << "  y': " << point3D_base.point.y
+//                               << "  z': " << point3D_base.point.z << endl;
 
+                     }
+                }
+             }
 }
 
-void transformPoint(const tf::TransformListener& listener){
-
-  //we'll create a point in the base_laser frame that we'd like to transform to the base_link frame
-
-  geometry_msgs::PointStamped laser_point;
-
-  laser_point.header.frame_id = "base_laser";
-
-
-
-  //we'll just use the most recent transform available for our simple example
-
-  laser_point.header.stamp = ros::Time();
-  //just an arbitrary point in space
-  laser_point.point.x = 1.0;
-  laser_point.point.y = 0.2;
-  laser_point.point.z = 0.0;
+geometry_msgs::PointStamped From2Dto3D::transformPoint(const tf::TransformListener& listener, const geometry_msgs::PointStamped laser_point)
+{
+  //geometry_msgs::PointStamped laser_point;
 
   try{
 
-    geometry_msgs::PointStamped base_point;
-
     listener.transformPoint("base_link", laser_point, base_point);
 
-
-
     ROS_INFO("base_laser: (%.2f, %.2f. %.2f) -----> base_link: (%.2f, %.2f, %.2f) at time %.2f",
-
         laser_point.point.x, laser_point.point.y, laser_point.point.z,
-
         base_point.point.x, base_point.point.y, base_point.point.z, base_point.header.stamp.toSec());
-
   }
 
   catch(tf::TransformException& ex){
@@ -219,7 +233,7 @@ void transformPoint(const tf::TransformListener& listener){
     ROS_ERROR("Received an exception trying to transform a point from \"base_laser\" to \"base_link\": %s", ex.what());
 
   }
-
+  return base_point;
 }
 
 int main(int argc, char** argv)
