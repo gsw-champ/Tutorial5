@@ -13,9 +13,9 @@ int main(int argc, char**argv){
     ros::ServiceClient test_client = n.serviceClient<tutorial5::Grasp>("Grasp_node");
     tutorial5::Grasp test;
     test.request.point.header.frame_id = "base_link";
-    test.request.point.point.x = 0.4;
+    test.request.point.point.x = 0.3;
     test.request.point.point.y = -0.3;
-    test.request.point.point.z = 0.26;
+    test.request.point.point.z = 0.5;
     if(test_client.call(test))
 	ROS_INFO("SUCCESS");
     else

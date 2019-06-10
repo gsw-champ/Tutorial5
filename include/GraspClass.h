@@ -40,6 +40,7 @@ namespace Grasp{
             
             ros::ServiceServer grasp_srv_ ;
             ros::Publisher lift_torso_;
+            ros::Publisher gripper_control_;
 
         public:
             GraspClass(std::string name, ros::NodeHandle n):nh_(n),grasp_(nh_,name, false),action_name_(name){
@@ -49,6 +50,7 @@ namespace Grasp{
                 // grasp_.start();
                 grasp_srv_ = nh_.advertiseService(name, &GraspClass::graspServerCB, this);
                 lift_torso_ = nh_.advertise<trajectory_msgs::JointTrajectory>("/torso_controller/command",1);
+                gripper_control_ = nh_.advertise<trajectory_msgs::JointTrajectory>("/gripper_controller/command",1);
             };
             ~GraspClass(){};
 
@@ -56,8 +58,11 @@ namespace Grasp{
             void preemptCB();
             bool graspServerCB(tutorial5::Grasp::Request &req, tutorial5::Grasp::Response &res);
             void prepare_robot();
-            void lift_torso();
+            void lift_torso(double height);
             void head_look_around();
+            void arm_control(geometry_msgs::PoseStamped goal);
+            void gripper_control(double width);
+            void arm_turked();
 
     }; //Class def
 
