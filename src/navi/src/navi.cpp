@@ -2,6 +2,7 @@
 #include <geometry_msgs/Twist.h>
 #include <move_base_msgs/MoveBaseAction.h>
 #include <move_base_msgs/MoveBaseActionResult.h>
+#include <pal_navigation_msgs/Acknowledgment.h>
 #include <ros/ros.h>
 #include <std_srvs/Empty.h>
 #include <iostream>
@@ -34,7 +35,8 @@ int main(int argc, char** argv) {
   ros::Rate r(10);
 
   std_srvs::Empty client_srv;
-  geometry_msgs::Twist msg;
+  geometry_msgs::Twist msg;  
+  pal_navigation_msgs::Acknowledgment pal_srv;
 
   ros::Duration(15).sleep();  // wait for arm tucked
 
@@ -49,12 +51,29 @@ int main(int argc, char** argv) {
   // ros::ServiceClient client =
   //    n.serviceClient<std_msgs::Bool>("ReachedTable");
 
-  ros::ServiceClient client_global =
+  ros::ServiceClient client_globallization =
       n.serviceClient<std_srvs::Empty>("/global_localization");
   ros::ServiceClient client_clear =
       n.serviceClient<std_srvs::Empty>("/move_base/clear_costmaps");
+  ros::ServiceClient client_pal_navigation =
+      n.serviceClient<pal_navigation_msgs::Acknowledgment>("/pal_navigation_sm");
+  ros::ServiceClient client_changeMap =
+      n.serviceClient<pal_navigation_msgs::Acknowledgment>("/pal_map_manager/change_map");
 
-  while (!client_global.call(client_srv)) {
+   pal_srv.request.input = "LOC";
+   while (!client_pal_navigation.call(pal_srv)) {
+     ROS_INFO("pal_navigation_sm.");
+     r.sleep();
+   }
+
+
+   pal_srv.request.input = "gsw_champ";
+   while (!client_changeMap.call(pal_srv)) {
+     ROS_INFO("Change costmaps.");
+     r.sleep();
+   }
+
+  while (!client_globallization.call(client_srv)) {
     ROS_INFO("Wait for global_localization.");
     r.sleep();
   }
@@ -68,6 +87,7 @@ int main(int argc, char** argv) {
     //    ROS_INFO("Localizing...");
   }
 
+
    while (!client_clear.call(client_srv)) {
      ROS_INFO("Clear costmaps.");
      r.sleep();
@@ -75,45 +95,45 @@ int main(int argc, char** argv) {
 
   std::vector<geometry_msgs::Pose> points;
 
-  // geometry_msgs::Pose point1;
-  // point1.position.x = -0.896;
-  // point1.position.y = 2.396;
-  // point1.position.z = 0.000;
-  // point1.orientation.x = 0;
-  // point1.orientation.y = 0;
-  // point1.orientation.z = 0.55;
-  // point1.orientation.w = 0.835;
-  // points.push_back(point1);
+   geometry_msgs::Pose point1;
+   point1.position.x = -1.2214;
+   point1.position.y = 1.11677;
+   point1.position.z = 0.000;
+   point1.orientation.x = 0;
+   point1.orientation.y = 0;
+   point1.orientation.z = 0.43753;
+   point1.orientation.w = 0.8992;
+   points.push_back(point1);
 
-  // geometry_msgs::Pose point2;
-  // point2.position.x = -1.77;
-  // point2.position.y = 2.907;
-  // point2.position.z = 0.000;
-  // point2.orientation.x = 0;
-  // point2.orientation.y = 0;
-  // point2.orientation.z = 0.562;
-  // point2.orientation.w = 0.827;
-  // points.push_back(point2);
+   geometry_msgs::Pose point2;
+   point2.position.x = -2.36213;
+   point2.position.y = 1.6746;
+   point2.position.z = 0.000;
+   point2.orientation.x = 0;
+   point2.orientation.y = 0;
+   point2.orientation.z = 0.43694;
+   point2.orientation.w = 0.8994;
+   points.push_back(point2);
 
-  geometry_msgs::Pose point1;
-  point1.position.x = -2.941;
-  point1.position.y = -2.388;
-  point1.position.z = 0.000;
-  point1.orientation.x = 0;
-  point1.orientation.y = 0;
-  point1.orientation.z = -0.318;
-  point1.orientation.w = 0.999;
-  points.push_back(point1);
+//  geometry_msgs::Pose point1;
+//  point1.position.x = -2.941;
+//  point1.position.y = -2.388;
+//  point1.position.z = 0.000;
+//  point1.orientation.x = 0;
+//  point1.orientation.y = 0;
+//  point1.orientation.z = -0.318;
+//  point1.orientation.w = 0.999;
+//  points.push_back(point1);
 
-  geometry_msgs::Pose point2;
-  point2.position.x = -4.171;
-  point2.position.y = -6.274;
-  point2.position.z = 0.000;
-  point2.orientation.x = 0;
-  point2.orientation.y = 0;
-  point2.orientation.z = -0.98;
-  point2.orientation.w = 0.216;
-  points.push_back(point2);
+//  geometry_msgs::Pose point2;
+//  point2.position.x = -4.171;
+//  point2.position.y = -6.274;
+//  point2.position.z = 0.000;
+//  point2.orientation.x = 0;
+//  point2.orientation.y = 0;
+//  point2.orientation.z = -0.98;
+//  point2.orientation.w = 0.216;
+//  points.push_back(point2);
 
   move_base_msgs::MoveBaseGoal goal;
 

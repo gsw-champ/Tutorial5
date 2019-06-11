@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   std_srvs
   moveit_ros_planning_interface
+  pal_navigation_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -108,7 +109,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
 # INCLUDE_DIRS include
 #  LIBRARIES simple_navigation_goals
- CATKIN_DEPENDS actionlib move_base_msgs roscpp geometry_msgs std_srvs moveit_ros_planning_interface
+ CATKIN_DEPENDS actionlib move_base_msgs roscpp geometry_msgs std_srvs    pal_navigation_msgs moveit_ros_planning_interface
 #  DEPENDS system_lib
 )
 
