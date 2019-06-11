@@ -44,7 +44,7 @@ using namespace std;
 using namespace cv;
 
 
-class perception
+class Perception
 {
 
     private:
@@ -57,7 +57,7 @@ class perception
       ros::Subscriber sub_cloud;
       ros::Subscriber sub_BB;
       ros::Publisher pub_point3D;
-      ros::ServiceServer srv_perception;
+      ros::ServiceServer srv_Perception;
       //! Define the pointcloud structure and the bounding box local copy
       pcl::PointCloud< pcl::PointXYZRGB > pc_point3D;
       //! A tf transform listener if needed
@@ -67,6 +67,7 @@ class perception
       string type_obj, class_obj;
       int temp, CenterPoints[2];
       int Object_num;
+      bool flag;
       geometry_msgs::PointStamped point3D;
       geometry_msgs::PointStamped point3D_base;
       geometry_msgs::PointStamped base_point;
@@ -78,44 +79,55 @@ class perception
       //! Process bounding boxes
       void processBoundingBoxes(const darknet_ros_msgs::BoundingBoxesConstPtr& r);
       geometry_msgs::PointStamped transformPoint(const tf::TransformListener& listener, const geometry_msgs::PointStamped laser_point);
+      bool find_box(perception::perc::Request &req, perception::perc::Response &res);
 
     public:
       //! Subscribes to and advertises topics
-      perception(ros::NodeHandle nh) : nh_(nh), priv_nh_("~")
+      Perception(ros::NodeHandle nh) : nh_(nh), priv_nh_("~")
       {
         // subscribers to the bounding boxes and the point cloud
         // format:
         // sub_name = nh_.subscribe<Type>("topic", queuesize, Function_of_the_class, this);
-        sub_cloud = nh_.subscribe( "/xtion/depth_registered/points", 10, &perception::processCloud, this);
-        sub_BB = nh_.subscribe( "/darknet_ros/bounding_boxes", 10, &perception::processBoundingBoxes, this);
-        //srv_perception = nh_.advertiseService("find_box", &perception::find_box, this);
+        flag = 0;
+        sub_cloud = nh_.subscribe( "/xtion/depth_registered/points", 10, &Perception::processCloud, this);
+        sub_BB = nh_.subscribe( "/darknet_ros/bounding_boxes", 10, &Perception::processBoundingBoxes, this);
+        srv_Perception = nh_.advertiseService("find_box", &Perception::find_box, this);
         // Publishers
         // format:
         //pub_name = nh_.advertise< Type >("topic", queuesize);
         pub_point3D = nh_.advertise< geometry_msgs::PointStamped >("/segmentation/point3D", 10);
-        ROS_INFO("perception initialized ...");
+        ROS_INFO("Perception initialized ...");
 
       }
 
-      ~perception() {}
+      ~Perception() {}
 };
 
 
-bool perception::find_box(perception::perc::Request &req, perception::perc::Response &res){
-    class_obj = req.class;
+bool Perception::find_box(perception::perc::Request &req, perception::perc::Response &res){
+    class_obj = req.class_name;
+    if ( flag )
+    {
+        res.point = point3D_base;
+     }
+    else {
+        ROS_INFO(" no bottles ");
+        return 0;
+    }
+    return 1;
 
 }
 
 
 
-void perception::processCloud(const sensor_msgs::PointCloud2ConstPtr& pc)
+void Perception::processCloud(const sensor_msgs::PointCloud2ConstPtr& pc)
 {
     // store local data copy or shared, depending on the message
     pcl::fromROSMsg(*pc, pc_point3D);
 
 }
 
-void perception::processBoundingBoxes(const darknet_ros_msgs::BoundingBoxesConstPtr& r)
+void Perception::processBoundingBoxes(const darknet_ros_msgs::BoundingBoxesConstPtr& r)
 {
 
     // process bounding box and send 3D position to the topic
@@ -143,6 +155,7 @@ void perception::processBoundingBoxes(const darknet_ros_msgs::BoundingBoxesConst
 //    }
 
     // while( pc_point3D.isOrganized() )
+    //flag = 0;
 
     Object_num = r->bounding_boxes.size();
 
@@ -167,6 +180,7 @@ void perception::processBoundingBoxes(const darknet_ros_msgs::BoundingBoxesConst
 
               if (!type_obj.compare(class_obj)) {
 
+                    flag = 1;
                     CenterPoints[0] = int ((r->bounding_boxes[j_obj].xmin +
                                             r->bounding_boxes[j_obj].xmax) / 2 );
                     CenterPoints[1] = int ((r->bounding_boxes[j_obj].ymin +
@@ -224,7 +238,7 @@ void perception::processBoundingBoxes(const darknet_ros_msgs::BoundingBoxesConst
              }
 }
 
-geometry_msgs::PointStamped perception::transformPoint(const tf::TransformListener& listener, const geometry_msgs::PointStamped laser_point)
+geometry_msgs::PointStamped Perception::transformPoint(const tf::TransformListener& listener, const geometry_msgs::PointStamped laser_point)
 {
   //geometry_msgs::PointStamped laser_point;
 
@@ -247,9 +261,9 @@ geometry_msgs::PointStamped perception::transformPoint(const tf::TransformListen
 
 int main(int argc, char** argv)
 {
-    ros::init(argc, argv, "perception");
+    ros::init(argc, argv, "Perception");
     ros::NodeHandle nh;
-    perception node(nh);
+    Perception node(nh);
     ros::spin();
     return 0;
 }

@@ -47,6 +47,11 @@ target_link_libraries(perception
   ${PCL_LIBRARIES}
 )
 
+add_executable(text_per src/text_per.cpp)
+target_link_libraries(text_per
+  ${catkin_LIBRARIES}
+)
+
 install(TARGETS perception
 #   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
