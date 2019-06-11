@@ -24,21 +24,23 @@ bool GraspClass::graspServerCB(tutorial5::Grasp::Request &req, tutorial5::Grasp:
     geometry_msgs::PoseStamped goal;
     geometry_msgs::PoseStamped pre_goal;
     goal.header.frame_id = req.point.header.frame_id;
-    goal.pose.position.x = req.point.point.x;
+    goal.pose.position.x = req.point.point.x-0.2;
     goal.pose.position.y = req.point.point.y;
     goal.pose.position.z = req.point.point.z;
-    goal.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(0,0,0);
+    goal.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(1.57,0,0);
     ROS_INFO("Start motion planning to x:%f y:%f z:%f", goal.pose.position.x,
                                                         goal.pose.position.y,
                                                         goal.pose.position.z);
     pre_goal = goal;
-    pre_goal.pose.position.x -= 0.1;
+    pre_goal.pose.position.z += 0.1;
+    pre_goal.pose.position.x -= 0.2;
+    GraspClass::arm_turked();
     GraspClass::arm_control(pre_goal);
     GraspClass::arm_control(goal);
-    GraspClass::gripper_control(0.2);
+    GraspClass::gripper_control(0.3);
     GraspClass::arm_control(pre_goal);
     GraspClass::arm_turked();
-    GraspClass::lift_torso(0.05);
+    GraspClass::lift_torso(0.1);
 
     return 0;
 }
@@ -78,11 +80,11 @@ void GraspClass::lift_torso(double height){
     trajectory_msgs::JointTrajectoryPoint jtp;
     jt.joint_names.push_back("torso_lift_joint");
     jtp.positions.push_back(height);
-    jtp.velocities.push_back(0.2);
-    jtp.time_from_start = ros::Duration(2);
+    jtp.velocities.push_back(0.25);
+    jtp.time_from_start = ros::Duration(5);
     jt.points.push_back(jtp);
     lift_torso_.publish(jt);
-    ros::Duration(3.0).sleep();
+    ros::Duration(2.0).sleep();
     ROS_INFO("Torso lift done!");
 }
 
@@ -112,7 +114,9 @@ void GraspClass::head_look_around(){
 void GraspClass::arm_control(geometry_msgs::PoseStamped goal){
 
     moveit::planning_interface::MoveGroupInterface group_arm_torso("arm_torso");
-    group_arm_torso.setPlannerId("SBLkConfigDefault");
+    //group_arm_torso.setPlannerId("SBLkConfigDefault");
+    group_arm_torso.setPlannerId("RRTConnectkConfigDefault");
+
     //ROS_INFO("%s",req.point.header.frame_id.c_str());
     group_arm_torso.setPoseReferenceFrame(goal.header.frame_id);
     group_arm_torso.setPoseTarget(goal);
@@ -140,12 +144,12 @@ void GraspClass::gripper_control(double width){
     jt.joint_names.push_back("gripper_right_finger_joint");
     jtp.positions.push_back(width/2);
     jtp.positions.push_back(width/2);
-    jtp.velocities.push_back(0.05);
-    jtp.velocities.push_back(0.05);
-    jtp.time_from_start = ros::Duration(10);
+    jtp.velocities.push_back(0.2);
+    jtp.velocities.push_back(0.2);
+    jtp.time_from_start = ros::Duration(60);
     jt.points.push_back(jtp);
     gripper_control_.publish(jt);
-    ros::Duration(4.0).sleep();
+    ros::Duration(1.0).sleep();
     ROS_INFO("grasping done!");
 }
  
