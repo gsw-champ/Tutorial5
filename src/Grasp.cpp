@@ -33,21 +33,21 @@ bool GraspClass::graspServerCB(tutorial5::Grasp::Request &req, tutorial5::Grasp:
                                                         goal.pose.position.z);
     pre_goal = goal;
     pre_goal.pose.position.z += 0.1;
-    pre_goal.pose.position.x -= 0.2;
-    GraspClass::arm_turked();
+    pre_goal.pose.position.x = 0.3;
+    
     GraspClass::arm_control(pre_goal);
     GraspClass::arm_control(goal);
     GraspClass::gripper_control(0.3);
     GraspClass::arm_control(pre_goal);
     GraspClass::arm_turked();
-    GraspClass::lift_torso(0.1);
 
     return 0;
 }
 
 void GraspClass::prepare_robot(){
     ROS_INFO("Preparing robot");
-    GraspClass::lift_torso(0.2);
+    GraspClass::lift_torso(0.34);
+    GraspClass::arm_turked();
     
 
 }
@@ -91,22 +91,27 @@ void GraspClass::lift_torso(double height){
 
 void GraspClass::head_look_around(){
     ROS_INFO("Head look around");
-//     actionlib::SimpleActionClient<control_msgs::FollowJointTrajectoryAction> head_control_client("/head_controller/follow_joint_trajectory", false);
-//    // control_client head_control_client;
-//     //head_control_client = control_client("/head_controller/follow_joint_trajectory", false);
-//     head_control_client.waitForServer(ros::Duration(2.0));
+    moveit::planning_interface::MoveGroupInterface group_arm_torso("arm_torso");
+    //group_arm_torso.setPlannerId("SBLkConfigDefault");
+    group_arm_torso.setPlannerId("RRTConnectkConfigDefault");
 
-//     control_msgs::FollowJointTrajectoryGoal head_goal;
-//     trajectory_msgs::JointTrajectory jt;
-//     trajectory_msgs::JointTrajectoryPoint jtp;
-//     ros::param::getParam("/Grasp/head_look_around", jt);
-//     head_goal.trajectory = jt;
-//     head_goal.trajectory.header.stamp = ros::Time::now() + ros::Duration(1.0);
-//     head_control_client.sendGoal(head_goal);
+    //ROS_INFO("%s",req.point.header.frame_id.c_str());
+    group_arm_torso.setPoseReferenceFrame(goal.header.frame_id);
+    group_arm_torso.setPoseTarget(goal);
 
-//     if(head_control_client.getState().isDone()){
-//         ROS_INFO("head looking around is done!");
-//     }
+    group_arm_torso.setStartStateToCurrentState();
+    group_arm_torso.setMaxVelocityScalingFactor(0.5);
+    moveit::planning_interface::MoveGroupInterface::Plan my_plan;
+
+    group_arm_torso.setPlanningTime(5.0);
+    group_arm_torso.plan(my_plan);
+    bool success;
+    success = bool(group_arm_torso.plan(my_plan));
+     if (!success)
+         throw std::runtime_error("no plan found");
+    moveit::planning_interface::MoveItErrorCode e = group_arm_torso.move();
+    if (!bool(e))
+        throw std::runtime_error("Error executing plan");
 
 
 }
@@ -138,18 +143,42 @@ void GraspClass::arm_control(geometry_msgs::PoseStamped goal){
 
 void GraspClass::gripper_control(double width){
     ROS_INFO("grasping");
-    trajectory_msgs::JointTrajectory jt;
-    trajectory_msgs::JointTrajectoryPoint jtp;
-    jt.joint_names.push_back("gripper_left_finger_joint");
-    jt.joint_names.push_back("gripper_right_finger_joint");
-    jtp.positions.push_back(width/2);
-    jtp.positions.push_back(width/2);
-    jtp.velocities.push_back(0.2);
-    jtp.velocities.push_back(0.2);
-    jtp.time_from_start = ros::Duration(60);
-    jt.points.push_back(jtp);
-    gripper_control_.publish(jt);
-    ros::Duration(1.0).sleep();
+    // trajectory_msgs::JointTrajectory jt;
+    // trajectory_msgs::JointTrajectoryPoint jtp;
+    // jt.joint_names.push_back("gripper_left_finger_joint");
+    // jt.joint_names.push_back("gripper_right_finger_joint");
+    // jtp.positions.push_back(width/2);
+    // jtp.positions.push_back(width/2);
+    // jtp.velocities.push_back(0.2);
+    // jtp.velocities.push_back(0.2);
+    // jtp.time_from_start = ros::Duration(60);
+    // jt.points.push_back(jtp);
+    // gripper_control_.publish(jt);
+    // ros::Duration(1.0).sleep();
+
+
+
+    moveit::planning_interface::MoveGroupInterface gripper_control("gripper");
+    //group_arm_torso.setPlannerId("SBLkConfigDefault");
+    gripper_control.setPlannerId("RRTConnectkConfigDefault");
+
+    //ROS_INFO("%s",req.point.header.frame_id.c_str());
+    gripper_control.setJointValueTarget("gripper_left_finger_link", width/2);
+    gripper_control.setJointValueTarget("gripper_right_finger_link", width/2);
+    gripper_control.setStartStateToCurrentState();
+    gripper_control.setMaxVelocityScalingFactor(0.5);
+    moveit::planning_interface::MoveGroupInterface::Plan my_plan;
+
+    gripper_control.setPlanningTime(5.0);
+    gripper_control.plan(my_plan);
+    bool success;
+    success = bool(gripper_control.plan(my_plan));
+     if (!success)
+         throw std::runtime_error("no plan found");
+    moveit::planning_interface::MoveItErrorCode e = gripper_control.move();
+    if (!bool(e))
+        throw std::runtime_error("Error executing plan");
+
     ROS_INFO("grasping done!");
 }
  
