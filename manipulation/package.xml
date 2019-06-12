@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>tutorial5</name>
+  <name>manipulation</name>
   <version>0.0.0</version>
   <description>The simple_navigation_goals package</description>
 
@@ -53,13 +53,16 @@
   <build_depend>geometry_msgs</build_depend>
   <build_depend>roscpp</build_depend>
   <build_depend>message_runtime</build_depend>
-
+  <build_depend>control_msgs</build_depend>
+  <build_depend>trajectory_msgs</build_depend>
 
   <exec_depend>message_runtime</exec_depend>
   <exec_depend>message_generation</exec_depend>
   <exec_depend>actionlib_msgs</exec_depend>
   <exec_depend>geometry_msgs</exec_depend>
   <exec_depend>roscpp</exec_depend>
+  <exec_depend>control_msgs</exec_depend>
+  <exec_depend>trajectory_msgs</exec_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->
