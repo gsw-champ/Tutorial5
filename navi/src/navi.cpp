@@ -17,8 +17,7 @@
 
 
 
-typedef actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction>
-    MoveBaseClient;
+typedef actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> MoveBaseClient;
 
 // callback function
 void doneCb(const actionlib::SimpleClientGoalState& state,
@@ -48,21 +47,21 @@ int main(int argc, char** argv) {
     manipulation::Grasp manipu_req;
 
     ros::ServiceClient client_globallization =
-        n.serviceClient<std_srvs::Empty>("/global_localization");
+      n.serviceClient<std_srvs::Empty>("/global_localization");
     ros::ServiceClient client_clear =
-        n.serviceClient<std_srvs::Empty>("/move_base/clear_costmaps");
+      n.serviceClient<std_srvs::Empty>("/move_base/clear_costmaps");
     ros::ServiceClient client_pal_navigation =
-        n.serviceClient<pal_navigation_msgs::Acknowledgment>("/pal_navigation_sm");
+      n.serviceClient<pal_navigation_msgs::Acknowledgment>("/pal_navigation_sm");
     ros::ServiceClient client_changeMap =
-        n.serviceClient<pal_navigation_msgs::Acknowledgment>("/pal_map_manager/change_map");
+      n.serviceClient<pal_navigation_msgs::Acknowledgment>("/pal_map_manager/change_map");
     ros::ServiceClient client_perception =
-        n.serviceClient<perception::perc>("find_box");
+      n.serviceClient<perception::perc>("find_box");
     ros::ServiceClient client_manipulation =
-        n.serviceClient<manipulation::Grasp>("Grasp_node");
+      n.serviceClient<manipulation::Grasp>("Grasp_node");
 
 
 
-    ros::Duration(10).sleep();  // wait for arm tucked
+    ros::Duration(5).sleep();  // wait for arm tucked
 
     // tell the action client that we want to spin a thread by default
     MoveBaseClient ac("move_base", true);
@@ -72,31 +71,30 @@ int main(int argc, char** argv) {
       ROS_INFO("Waiting for the move_base action server to come up");
     }
 
-    //pal_srv.request.input = "LOC";
-   // while (!client_pal_navigation.call(pal_srv)) {
-   //  ROS_INFO("pal_navigation_sm.");
-    //  r.sleep();
-   // }
+    pal_srv.request.input = "LOC";
+    while (!client_pal_navigation.call(pal_srv)) {
+      ROS_INFO("pal_navigation_sm.");
+      r.sleep();
+    }
 
 
-   // pal_srv.request.input = "gsw_champ";
-   // while (!client_changeMap.call(pal_srv)) {
-   //   ROS_INFO("Change costmaps.");
-   //   r.sleep();
-   // }
+    pal_srv.request.input = "gsw_champ";
+    while (!client_changeMap.call(pal_srv)) {
+      ROS_INFO("Change costmaps.");
+      r.sleep();
+    }
 
     while (!client_globallization.call(client_srv)) {
       ROS_INFO("Wait for global_localization.");
       r.sleep();
     }
 
-    ros::Publisher pub =
-        n.advertise<geometry_msgs::Twist>("/mobile_base_controller/cmd_vel", 1);
+    ros::Publisher pub = n.advertise<geometry_msgs::Twist>("/mobile_base_controller/cmd_vel", 1);
     msg.angular.z = 0.5;
     ros::Time start = ros::Time::now();
     while ((ros::Time::now() - start) < ros::Duration(25)) {
       pub.publish(msg);
-      //    ROS_INFO("Localizing...");
+      ROS_INFO("Localizing...");
     }
 
 
@@ -107,75 +105,61 @@ int main(int argc, char** argv) {
 
     std::vector<geometry_msgs::Pose> points;
 
-   /*geometry_msgs::Pose point1;
-   point1.position.x = -1.2214;
-   point1.position.y = 1.11677;
-   point1.position.z = 0.000;
-   point1.orientation.x = 0;
-   point1.orientation.y = 0;
-   point1.orientation.z = 0.43753;
-   point1.orientation.w = 0.8992;
-   points.push_back(point1);*/
+    geometry_msgs::Pose point1;
+    point1.position.x = -1.35397;
+    point1.position.y = 1.20348;
+    point1.position.z = 0.000;
+    point1.orientation.x = 0;
+    point1.orientation.y = 0;
+    point1.orientation.z = 0.49098;
+    point1.orientation.w = 0.87116;
+    points.push_back(point1);
 
-   geometry_msgs::Pose point1;
-   point1.position.x = 2.679;
-   point1.position.y = -0.215;
-   point1.position.z = 0.000;
-   point1.orientation.x = 0;
-   point1.orientation.y = 0;
-   point1.orientation.z = 0.707;
-   point1.orientation.w = 0.707;
-   points.push_back(point1);
-
-   geometry_msgs::Pose point2;
-   point2.position.x = -2.36213;
-   point2.position.y = 1.6746;
-   point2.position.z = 0.000;
-   point2.orientation.x = 0;
-   point2.orientation.y = 0;
-   point2.orientation.z = 0.43694;
-   point2.orientation.w = 0.8994;
-   points.push_back(point2);
+    geometry_msgs::Pose point2;
+    point2.position.x = -2.06213;
+    point2.position.y = 1.6746;
+    point2.position.z = 0.000;
+    point2.orientation.x = 0;
+    point2.orientation.y = 0;
+    point2.orientation.z = 0.49094;
+    point2.orientation.w = 0.8794;
+    points.push_back(point2);
 
 
-   percep_req.response.point.point.x = 0.0;
-   percep_req.response.point.point.y = 0.0;
-   percep_req.response.point.point.z = 0.0;
+    percep_req.response.point.point.x = 0.0;
+    percep_req.response.point.point.y = 0.0;
+    percep_req.response.point.point.z = 0.0;
 
 
     move_base_msgs::MoveBaseGoal goal, goal_temp;
 
-      goal_temp.target_pose.header.stamp = ros::Time::now();     
-      goal_temp.target_pose.header.frame_id = "base_link";
-      goal_temp.target_pose.pose.position.x = 0.1;
-      goal_temp.target_pose.pose.position.y = 0.0;
-      goal_temp.target_pose.pose.position.z = 0.0;
-      goal_temp.target_pose.pose.orientation.x = 0.0;
-      goal_temp.target_pose.pose.orientation.y = 0.0;
-      goal_temp.target_pose.pose.orientation.z = 0.0;
-      goal_temp.target_pose.pose.orientation.w = 1.0;
+    goal_temp.target_pose.header.stamp = ros::Time::now();     
+    goal_temp.target_pose.header.frame_id = "base_footprint";
+    goal_temp.target_pose.pose.position.x = 0.3;
+    goal_temp.target_pose.pose.position.y = 0.0;
+    goal_temp.target_pose.pose.position.z = 0.0;
+    goal_temp.target_pose.pose.orientation.x = 0.0;
+    goal_temp.target_pose.pose.orientation.y = 0.0;
+    goal_temp.target_pose.pose.orientation.z = 0.0;
+    goal_temp.target_pose.pose.orientation.w = 1.0;
 
 
     // set target pose frame of coordinates
     goal.target_pose.header.frame_id = "map";
-
-    int i = 0;
-
     goal.target_pose.header.stamp = ros::Time::now();
-    goal.target_pose.pose = points.at(i);
-    ROS_INFO("Sending goal %d", i + 1);
+    goal.target_pose.pose = points.at(0);
+    ROS_INFO("Sending goal %d", 1);
     // send goal and register callback handler
     ac.sendGoal(goal, &doneCb, &activeCb);  // &feedbackCb
     ac.waitForResult();                     // wait for goal result
 
     if (ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED) 
-      ROS_INFO("Successfully moved to goal %d", i + 1);
+      ROS_INFO("Successfully moved to goal %d", 1);
     else {
-      ROS_INFO("The base failed to move to goal %d for some reason", i + 1);
+      ROS_INFO("The base failed to move to goal %d for some reason", 1);
     }
 
-	//first goal done
-
+  	//first goal done
     manipu_req.request.motion_name = "prepare";
     while(!client_manipulation.call(manipu_req)){
       ROS_INFO("Waiting for prepare");
@@ -183,18 +167,56 @@ int main(int argc, char** argv) {
 
     ros::Duration(3.0).sleep();
 
-        //call perception
-    percep_req.request.class_name = "cup";
+    //call perception, check if the position is valid
+    percep_req.request.class_name = "bottle";
     while(percep_req.response.point.point.x == 0.0){
     	client_perception.call(percep_req);
-	ROS_INFO("no object detected");
+	    ROS_INFO("no object detected");
     }
     object = percep_req.response.point;
     manipu_req.request.point = object;
     manipu_req.request.motion_name = "pick";
 
-      //point3d
-      //call manipulation
+    //call manipulation
+    while(!client_manipulation.call(manipu_req)){
+
+      ac.sendGoal(goal_temp, &doneCb, &activeCb);  // go forward 0.1m
+      ac.waitForResult();  
+      ROS_INFO("Go forward 0.1m");
+
+      //perception one more time
+      percep_req.response.point.point.x = 0.0;
+      percep_req.response.point.point.y = 0.0;
+      percep_req.response.point.point.z = 0.0;
+      while(percep_req.response.point.point.x == 0.0){
+    	  client_perception.call(percep_req);
+	      ROS_INFO("no object detected");
+      }
+      
+      //reset action goal
+      object = percep_req.response.point;
+      manipu_req.request.point = object;
+    }
+    ROS_INFO("Catch object");
+
+
+    //go to 2 point
+    goal.target_pose.header.stamp = ros::Time::now();
+    goal.target_pose.pose = points.at(1);
+    ROS_INFO("Sending goal %d", 2);
+    // send goal and register callback handler
+    ac.sendGoal(goal, &doneCb, &activeCb);  // &feedbackCb
+    ac.waitForResult();                     // wait for goal result
+
+    if (ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED) 
+      ROS_INFO("Successfully moved to goal %d", 2);
+    else {
+      ROS_INFO("The base failed to move to goal %d for some reason", 2);
+    }
+
+
+    manipu_req.request.point = object;
+    manipu_req.request.motion_name = "place";
 
     while(!client_manipulation.call(manipu_req)){
 
@@ -208,17 +230,12 @@ int main(int argc, char** argv) {
       percep_req.response.point.point.z = 0.0;
       while(percep_req.response.point.point.x == 0.0){
     	  client_perception.call(percep_req);
-	  ROS_INFO("no object detected");
+	      ROS_INFO("no object detected");
       }
-      
-      //reset action goal
-      object = percep_req.response.point;
-      manipu_req.request.point = object;
     }
-      //output bool
-    ROS_INFO("Catch object");
 
 
-    
-    return 0;
+
+
+    return 1;
 }

@@ -7,6 +7,7 @@
 #include <std_msgs/String.h>
 #include <boost/bind.hpp>
 #include <iostream>
+
 /****** Moveit HEADER *********/
 #include <moveit/move_group_interface/move_group_interface.h>
 #include <moveit_msgs/PickupAction.h>
@@ -65,6 +66,7 @@ namespace Grasp{
             void arm_control(geometry_msgs::PoseStamped goal);
             void gripper_control(double width);
             void arm_turked();
+            void arm_torso_control(std::vector<double> &joints);
 
     }; //Class def
 
