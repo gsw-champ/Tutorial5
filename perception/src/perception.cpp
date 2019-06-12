@@ -112,7 +112,7 @@ bool Perception::find_box(perception::perc::Request &req, perception::perc::Resp
     check_object = false;
     class_obj = req.class_name;
     while (check_object){
-        ROS_INFO_STREAM("NO "<< req.class_name <<"detected");
+        ROS_INFO_STREAM("NO "<< req.class_name <<" detected");
     }
 
     res.point = point3D_base;
