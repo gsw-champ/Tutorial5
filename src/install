@@ -1,0 +1,55 @@
+1) install openpose
+git clone https://github.com/CMU-Perceptual-Computing-Lab/openpose
+sudo apt-get install cmake-qt-gui
+cd scripts
+sudo ubuntu/install_cuda.sh
+sudo ubuntu/install_cudnn.sh
+
+### can't find install_cmake
+./ubuntu/install_cmake.sh
+
+sudo apt-get install libopencv-dev
+
+### check if the version is correct then you don't need to do this
+sudo rm -rf /usr/local/cuda
+sudo ln -s /usr/local/cuda-8.0/ /usr/local/cuda
+
+### check in bashrc if the export all right
+gedit ~/.bashrc
+  delete '9.1'
+
+nvcc --version
+
+cmake-gui
+  select the OpenPose directory as project source directory, and a non-existing or empty sub-directory (e.g., build) ### in doc/media can find more details
+  Press the Configure button, keep the generator in Unix Makefile
+  Press the Generate button
+
+cd build/
+make -j`nproc`
+sudo make install
+pip install numpy
+pip install opencv-python
+cd 
+cd openpose/3rdparty/caffe/
+  copy Make.config to this dir
+
+# try this if not work
+mkdir build
+cd build
+cmake ..
+make all
+make install
+make runtest
+#######
+
+make all
+make test
+make runtest
+  if failed, restart the computer
+gedit ~/.bashrc
+  export PYTHONPATH=~/openpose/3rdparty/caffe/python:$PYTHONPATH
+
+2) install face_recognition
+sudo pip install face_recognition
+
