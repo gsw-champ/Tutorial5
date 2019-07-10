@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(pose_tensorflow)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
- add_compile_options(-std=c++11)
+add_compile_options(-std=c++11)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -61,10 +61,10 @@ add_message_files(
 )
 
 ## Generate services in the 'srv' folder
-add_service_files(
-  FILES
-  SaveImage.srv
-)
+# add_service_files(
+#   FILES
+#   SaveImage.srv
+# )
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -142,8 +142,8 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(save_image src/save_image.cpp)
-target_link_libraries(save_image ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+# add_executable(save_image src/save_image.cpp)
+# target_link_libraries(save_image ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use

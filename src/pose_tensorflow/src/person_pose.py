@@ -10,9 +10,10 @@ sys.path.append(os.path.dirname(__file__) + "/../")
 import numpy as np
 
 from scipy.misc import imread, imsave
-from std_msgs.msg import String
+from scipy.ndimage import filters
+# from std_msgs.msg import Float64MultiArray
+from sensor_msgs.msg import CompressedImage
 from sensor_msgs.msg import Image
-
 
 from util.config import load_config
 from dataset.factory import create as create_dataset
@@ -24,16 +25,31 @@ from multiperson.detections import extract_detections
 from multiperson.predict import SpatialModel, eval_graph, get_person_conf_multicut
 from multiperson.visualize import PersonDraw, visualize_detections
 
-import matplotlib.pyplot as plt
+ros_path = '/opt/ros/kinetic/lib/python2.7/dist-packages'
 
-from pose_tensorflow.srv import *
-from std_msgs.msg import Float32MultiArray 
-# from pose_tensorflow.msg import PersonPose
+if ros_path in sys.path:
+
+    sys.path.remove(ros_path)
+
+import cv2
+
+sys.path.append('/opt/ros/kinetic/lib/python2.7/dist-packages')
+
+from pose_tensorflow.msg import *
+# from perception_person.srv import *
 
 
+# class image_to_pose():
 
+#     def __init__(self):
+#         # initialze pub and sub
+#         self.image_pub = rospy.Publisher("/output/image_raw/compressed", CompressedImage)
 
-def callback(req):
+#         self.image_sub = rospy.Subscriber("xtion/rgb/image_raw/compressed", \
+#             CompressedImage, self.callback, queue_size=1)
+#         print('image recieving')
+
+def callback():
 
     cfg = load_config("src/pose_tensorflow/src/pose_cfg_multi.yaml")
     dataset = create_dataset(cfg)
@@ -41,83 +57,109 @@ def callback(req):
     sm = SpatialModel(cfg)
     sm.load()
 
+    zero_np = np.zeros([1,2])
+
+    image_pose_pub = rospy.Publisher("/output/person_pose", PersonPose, queue_size=1)
+    image_pub = rospy.Publisher("/output/image", Image, queue_size=10)
+    msg = PersonPose()
+    msg_image = Image()
+
     # pose_person_pub = rospy.Publisher("pose_person", PersonPose, queue_size=1)
 
     # Load and setup CNN part detector
     sess, inputs, outputs = predict.setup_pose_prediction(cfg)
-    rospy.loginfo('$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$')
+    print('$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$')
 
-    for i in range(2):
-        # Read image from file
-        file_name = 'image/a.png'
-        image = imread(file_name, mode='RGB')
+    while not rospy.is_shutdown():
+
+        rospy.loginfo("Getting image...")
+        img = rospy.wait_for_message("/xtion/rgb/image_raw/compressed", CompressedImage)
+        rospy.loginfo("Got image!")
+        # img = rospy.wait_for_message("xtion/rgb/image_raw/compressed", CompressedImage)
+        np_arr = np.fromstring(img.data, np.uint8)
+        # np arrary image
+        image = cv2.imdecode(np_arr, 1)
+        # print('################',type(image))
+        # # Read image from file cv2.CV_LOAD_IMAGE_COLOR
+        # file_name = 'image/a.png'
+        # image = imread(file_name, mode='RGB')
 
         image_batch = data_to_input(image)
 
         # Compute prediction with the CNN
         outputs_np = sess.run(outputs, feed_dict={inputs: image_batch})
-        scmap, locref, pairwise_diff = predict.extract_cnn_output(outputs_np, cfg, dataset.pairwise_stats)
+        scmap, locref, pairwise_diff = predict.extract_cnn_output(
+            outputs_np, cfg, dataset.pairwise_stats)
 
         detections = extract_detections(cfg, scmap, locref, pairwise_diff)
-        unLab, pos_array, unary_array, pwidx_array, pw_array = eval_graph(sm, detections)
-        person_conf_multi = get_person_conf_multicut(sm, unLab, unary_array, pos_array)
+        unLab, pos_array, unary_array, pwidx_array, pw_array = eval_graph(
+            sm, detections)
+        person_conf_multi = get_person_conf_multicut(
+            sm, unLab, unary_array, pos_array)
 
         wave_person = []
         for pidx in range(person_conf_multi.shape[0]):
 
-            if person_conf_multi[pidx, 9, 0] != 0 and person_conf_multi[pidx, 9, 1] != 0 and person_conf_multi[pidx, 10, 0] != 0 and person_conf_multi[pidx, 10, 1] != 0:
-                
-                
-                rospy.loginfo('************************************')
-                
-                
-                if (person_conf_multi[pidx, 9, 1] < person_conf_multi[pidx, 5, 1]) or (person_conf_multi[pidx, 10, 1] < person_conf_multi[pidx, 6, 1]):
-            
-                    rospy.loginfo('########################################')
-                    
+            # shoudler, elbow, wrist
+            if ((person_conf_multi[pidx, 5] == zero_np).all and (person_conf_multi[pidx, 6] == zero_np).all \
+            and (person_conf_multi[pidx, 7] == zero_np).all and (person_conf_multi[pidx, 8] == zero_np).all \
+            and (person_conf_multi[pidx, 9] == zero_np).all and (person_conf_multi[pidx, 10] == zero_np).all): 
+
+                if (person_conf_multi[pidx, 9, 1] < person_conf_multi[pidx, 7, 1]) or \
+                    (person_conf_multi[pidx, 10, 1] < person_conf_multi[pidx, 8, 1]):
+
                     wave_person_x = (person_conf_multi[pidx, 5, 0] + person_conf_multi[pidx, 6, 0]) / 2
                     wave_person_y = (person_conf_multi[pidx, 5, 1] + person_conf_multi[pidx, 6, 1]) / 2
-                    
+
                     wave_person.append([wave_person_x, wave_person_y])
-
-                    img = np.copy(image)
-
-                    visim_multi = img.copy()
-
-                    draw_multi = PersonDraw()
-                    fig = plt.imshow(visim_multi)
-                    draw_multi.draw(visim_multi, dataset, person_conf_multi)
-                    fig.axes.get_xaxis().set_visible(False)
-                    fig.axes.get_yaxis().set_visible(False)
-
-                    plt.show()
-                    visualize.waitforbuttonpress()
-
 
                     if len(wave_person) == 0:
                         rospy.loginfo('No PERSON DETECTED')
                         return False
+
                     elif len(wave_person) > 1:
                         rospy.loginfo('PERSON DETECTED')
-                        id_person = int(len(wave_person)/2)                        
+                        id_person = int(len(wave_person) / 2)
                         person_pose = wave_person[id_person]
                         x = person_pose[0]
                         y = person_pose[1]
-                        return SaveImageResponse(x,y)
+
+                        msg.x = x
+                        msg.y = y
+                        image_pose_pub.publish(msg)
+                        
+                        cv2.putText(image, str(person_pose), (int(x),int(y)), cv2.FONT_HERSHEY_SIMPLEX, 2, (0,255,255), 2)
+
+                        msg_image.header.stamp = rospy.Time.now()
+                        msg_image.data = image.astype(np.uint8)
+                        image_pub.publish(msg_image)
 
                     elif len(wave_person) == 1:
                         rospy.loginfo('One PERSON DETECTED')
                         person_pose = wave_person[0]
                         x = person_pose[0]
                         y = person_pose[1]
-                        return SaveImageResponse(x,y)
+
+                        msg.x = x
+                        msg.y = y
+                        image_pose_pub.publish(msg)
+
+                        cv2.putText(image, str(person_pose), (int(x),int(y)), cv2.FONT_HERSHEY_SIMPLEX, 2, (0,255,255), 2)
+                        # , cv2.LINE_AA
+
+                        
+                        msg_image.header.stamp = rospy.Time.now()
+                        msg_image.data = image.astype(np.uint8)
+                        image_pub.publish(msg_image)
+
+
+                    
+
 
 def main():
-
-    service = rospy.Service("person_pose", SaveImage, callback)
-    rospy.init_node('pose_tensorflow', anonymous=True)
+    rospy.init_node('pose_tensorflow')
+    callback()
     rospy.spin()
-
 
 
 if __name__ == '__main__':
