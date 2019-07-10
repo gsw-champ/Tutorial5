@@ -25,6 +25,8 @@ from multiperson.detections import extract_detections
 from multiperson.predict import SpatialModel, eval_graph, get_person_conf_multicut
 from multiperson.visualize import PersonDraw, visualize_detections
 
+import matplotlib.pyplot as plt
+
 ros_path = '/opt/ros/kinetic/lib/python2.7/dist-packages'
 
 if ros_path in sys.path:
@@ -56,6 +58,8 @@ def callback():
 
     sm = SpatialModel(cfg)
     sm.load()
+
+    draw_multi = PersonDraw()
 
     zero_np = np.zeros([1,2])
 
@@ -121,6 +125,7 @@ def callback():
                         rospy.loginfo('PERSON DETECTED')
                         id_person = int(len(wave_person) / 2)
                         person_pose = wave_person[id_person]
+                        np.around(person_pose, decimals=3)
                         x = person_pose[0]
                         y = person_pose[1]
 
@@ -128,15 +133,27 @@ def callback():
                         msg.y = y
                         image_pose_pub.publish(msg)
                         
-                        cv2.putText(image, str(person_pose), (int(x),int(y)), cv2.FONT_HERSHEY_SIMPLEX, 2, (0,255,255), 2)
+                        cv2.putText(image, str(person_pose), (int(x),int(y)), cv2.FONT_HERSHEY_SIMPLEX, 2, (0,255,255), 2, cv2.LINE_AA)
 
                         msg_image.header.stamp = rospy.Time.now()
                         msg_image.data = image.astype(np.uint8)
                         image_pub.publish(msg_image)
 
+                        img = np.copy(image)
+
+                        visim_multi = img.copy()
+
+                        fig = plt.imshow(visim_multi)
+                        draw_multi.draw(visim_multi, dataset, person_conf_multi)
+                        fig.axes.get_xaxis().set_visible(False)
+                        fig.axes.get_yaxis().set_visible(False)
+
+                        plt.show()
+
                     elif len(wave_person) == 1:
                         rospy.loginfo('One PERSON DETECTED')
                         person_pose = wave_person[0]
+                        np.around(person_pose, decimals=3)
                         x = person_pose[0]
                         y = person_pose[1]
 
@@ -144,13 +161,24 @@ def callback():
                         msg.y = y
                         image_pose_pub.publish(msg)
 
-                        cv2.putText(image, str(person_pose), (int(x),int(y)), cv2.FONT_HERSHEY_SIMPLEX, 2, (0,255,255), 2)
+                        cv2.putText(image, str(person_pose), (int(x),int(y)), cv2.FONT_HERSHEY_SIMPLEX, 2, (0,255,255), 2, cv2.LINE_AA)
                         # , cv2.LINE_AA
 
                         
                         msg_image.header.stamp = rospy.Time.now()
                         msg_image.data = image.astype(np.uint8)
                         image_pub.publish(msg_image)
+
+                        img = np.copy(image)
+
+                        visim_multi = img.copy()
+
+                        fig = plt.imshow(visim_multi)
+                        draw_multi.draw(visim_multi, dataset, person_conf_multi)
+                        fig.axes.get_xaxis().set_visible(False)
+                        fig.axes.get_yaxis().set_visible(False)
+
+                        plt.show()
 
 
                     
