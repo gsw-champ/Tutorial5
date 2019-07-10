@@ -1,0 +1,3 @@
+bool do_save
+---
+bool save_status

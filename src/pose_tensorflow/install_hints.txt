@@ -1,0 +1,13 @@
+add #!/usr/bin/env python3 in the beginning
+
+follow the instructions in git
+
+multiperson_func: config path !!!!
+
+roslib.load_manifest("package name !!!!")
+
+
+python 2.7
+
+
+pip install catkin_pkg dataset factory
