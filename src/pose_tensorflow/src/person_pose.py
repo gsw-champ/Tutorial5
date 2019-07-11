@@ -38,7 +38,7 @@ import cv2
 sys.path.append('/opt/ros/kinetic/lib/python2.7/dist-packages')
 
 from pose_tensorflow.msg import *
-# from perception_person.srv import *
+from perception_person.srv import *
 
 
 # class image_to_pose():
@@ -64,7 +64,8 @@ def callback():
     zero_np = np.zeros([1,2])
 
     image_pose_pub = rospy.Publisher("/output/person_pose", PersonPose, queue_size=1)
-    image_pub = rospy.Publisher("/output/image", Image, queue_size=10)
+    person_pose_client = rospy.ServiceProxy("position_base/point3D", PercepPerson)
+    image_pub = rospy.Publisher("/output/image", Image, queue_size=1)
     msg = PersonPose()
     msg_image = Image()
 
@@ -73,6 +74,8 @@ def callback():
     # Load and setup CNN part detector
     sess, inputs, outputs = predict.setup_pose_prediction(cfg)
     print('$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$')
+
+    person_x_old = 0
 
     while not rospy.is_shutdown():
 
@@ -83,7 +86,8 @@ def callback():
         np_arr = np.fromstring(img.data, np.uint8)
         # np arrary image
         image = cv2.imdecode(np_arr, 1)
-        # print('################',type(image))
+
+        # print('################',image.shape) 480, 640, 3
         # # Read image from file cv2.CV_LOAD_IMAGE_COLOR
         # file_name = 'image/a.png'
         # image = imread(file_name, mode='RGB')
@@ -105,80 +109,93 @@ def callback():
         for pidx in range(person_conf_multi.shape[0]):
 
             # shoudler, elbow, wrist
-            if ((person_conf_multi[pidx, 5] == zero_np).all and (person_conf_multi[pidx, 6] == zero_np).all \
-            and (person_conf_multi[pidx, 7] == zero_np).all and (person_conf_multi[pidx, 8] == zero_np).all \
-            and (person_conf_multi[pidx, 9] == zero_np).all and (person_conf_multi[pidx, 10] == zero_np).all): 
+            if (person_conf_multi[pidx, 5, 0] != 0 and person_conf_multi[pidx, 5, 1] != 0 \
+                and person_conf_multi[pidx, 6, 0] != 0 and person_conf_multi[pidx, 6, 1] != 0 \
+                and person_conf_multi[pidx, 7, 0] != 0 and person_conf_multi[pidx, 7, 1] != 0 \
+                and person_conf_multi[pidx, 8, 0] != 0 and person_conf_multi[pidx, 8, 1] != 0 \
+                and person_conf_multi[pidx, 9, 0] != 0 and person_conf_multi[pidx, 9, 1] != 0 \
+                and person_conf_multi[pidx, 10, 0] != 0 and person_conf_multi[pidx, 10, 1] != 0): 
 
-                if (person_conf_multi[pidx, 9, 1] < person_conf_multi[pidx, 7, 1]) or \
-                    (person_conf_multi[pidx, 10, 1] < person_conf_multi[pidx, 8, 1]):
+                if (person_conf_multi[pidx, 9, 1] < person_conf_multi[pidx, 5, 1]) or \
+                    (person_conf_multi[pidx, 10, 1] < person_conf_multi[pidx, 6, 1]):
+                    
+                    if person_x_old == 0:
+                        person_x_old = person_conf_multi[pidx, 9, 0]
+                    
+                        while abs(person_conf_multi[pidx, 9, 0] - person_x_old) > 50:
 
-                    wave_person_x = (person_conf_multi[pidx, 5, 0] + person_conf_multi[pidx, 6, 0]) / 2
-                    wave_person_y = (person_conf_multi[pidx, 5, 1] + person_conf_multi[pidx, 6, 1]) / 2
+                            person_x_old = person_conf_multi[pidx, 9, 0]
 
-                    wave_person.append([wave_person_x, wave_person_y])
 
-                    if len(wave_person) == 0:
-                        rospy.loginfo('No PERSON DETECTED')
-                        return False
+                            wave_person_x = (person_conf_multi[pidx, 5, 0] + person_conf_multi[pidx, 6, 0]) / 2
+                            wave_person_y = (person_conf_multi[pidx, 5, 1] + person_conf_multi[pidx, 6, 1]) / 2
 
-                    elif len(wave_person) > 1:
-                        rospy.loginfo('PERSON DETECTED')
-                        id_person = int(len(wave_person) / 2)
-                        person_pose = wave_person[id_person]
-                        np.around(person_pose, decimals=3)
-                        x = person_pose[0]
-                        y = person_pose[1]
+                            wave_person.append([wave_person_x, wave_person_y])
 
-                        msg.x = x
-                        msg.y = y
-                        image_pose_pub.publish(msg)
-                        
-                        cv2.putText(image, str(person_pose), (int(x),int(y)), cv2.FONT_HERSHEY_SIMPLEX, 2, (0,255,255), 2, cv2.LINE_AA)
+                            if len(wave_person) == 0:
+                                rospy.loginfo('No PERSON DETECTED')
+                                return False
 
-                        msg_image.header.stamp = rospy.Time.now()
-                        msg_image.data = image.astype(np.uint8)
-                        image_pub.publish(msg_image)
+                            elif len(wave_person) > 1:
+                                rospy.loginfo('PERSON DETECTED')
+                                id_person = int(len(wave_person) / 2)
+                                person_pose = wave_person[id_person]
+                                person_pose = np.around(person_pose, decimals=3)
+                                x = person_pose[0]
+                                y = person_pose[1]
 
-                        img = np.copy(image)
+                                msg.x = x
+                                msg.y = y
+                                image_pose_pub.publish(msg)
+                                person_pose_client(x, y)
+                                
+                                cv2.putText(image, str(person_pose), (int(x),int(y)), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,255,255), 2, cv2.LINE_AA)
 
-                        visim_multi = img.copy()
+                                msg_image.header.stamp = rospy.Time.now()
+                                msg_image.data = image.astype(np.uint8)
+                                image_pub.publish(msg_image)
 
-                        fig = plt.imshow(visim_multi)
-                        draw_multi.draw(visim_multi, dataset, person_conf_multi)
-                        fig.axes.get_xaxis().set_visible(False)
-                        fig.axes.get_yaxis().set_visible(False)
+                                img = np.copy(image)
 
-                        plt.show()
+                                visim_multi = img.copy()
 
-                    elif len(wave_person) == 1:
-                        rospy.loginfo('One PERSON DETECTED')
-                        person_pose = wave_person[0]
-                        np.around(person_pose, decimals=3)
-                        x = person_pose[0]
-                        y = person_pose[1]
+                                fig = plt.imshow(visim_multi)
+                                draw_multi.draw(visim_multi, dataset, person_conf_multi)
+                                fig.axes.get_xaxis().set_visible(False)
+                                fig.axes.get_yaxis().set_visible(False)
 
-                        msg.x = x
-                        msg.y = y
-                        image_pose_pub.publish(msg)
+                                plt.show()
 
-                        cv2.putText(image, str(person_pose), (int(x),int(y)), cv2.FONT_HERSHEY_SIMPLEX, 2, (0,255,255), 2, cv2.LINE_AA)
-                        # , cv2.LINE_AA
+                            elif len(wave_person) == 1:
+                                rospy.loginfo('One PERSON DETECTED')
+                                person_pose = wave_person[0]
+                                person_pose = np.around(person_pose, decimals=3)
+                                x = person_pose[0]
+                                y = person_pose[1]
 
-                        
-                        msg_image.header.stamp = rospy.Time.now()
-                        msg_image.data = image.astype(np.uint8)
-                        image_pub.publish(msg_image)
+                                msg.x = x
+                                msg.y = y
+                                image_pose_pub.publish(msg)
+                                person_pose_client(x, y)
 
-                        img = np.copy(image)
+                                cv2.putText(image, str(person_pose), (int(x),int(y)), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,255,255), 2, cv2.LINE_AA)
+                                # , cv2.LINE_AA
 
-                        visim_multi = img.copy()
+                                
+                                msg_image.header.stamp = rospy.Time.now()
+                                msg_image.data = image.astype(np.uint8)
+                                image_pub.publish(msg_image)
 
-                        fig = plt.imshow(visim_multi)
-                        draw_multi.draw(visim_multi, dataset, person_conf_multi)
-                        fig.axes.get_xaxis().set_visible(False)
-                        fig.axes.get_yaxis().set_visible(False)
+                                img = np.copy(image)
 
-                        plt.show()
+                                visim_multi = img.copy()
+
+                                fig = plt.imshow(visim_multi)
+                                draw_multi.draw(visim_multi, dataset, person_conf_multi)
+                                fig.axes.get_xaxis().set_visible(False)
+                                fig.axes.get_yaxis().set_visible(False)
+
+                                plt.show()
 
 
                     
@@ -187,6 +204,9 @@ def callback():
 def main():
     rospy.init_node('pose_tensorflow')
     callback()
+    
+    
+    
     rospy.spin()
 
 
