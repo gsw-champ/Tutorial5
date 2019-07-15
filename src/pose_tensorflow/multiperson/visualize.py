@@ -142,9 +142,8 @@ class PersonDraw:
                 p2 = (int(math.floor(person_conf[pidx, kidx2, 0])), int(math.floor(person_conf[pidx, kidx2, 1])))
 
                 if check_point(p1[0], p1[1], minx, miny, maxx, maxy) and check_point(p2[0], p2[1], minx, miny, maxx, maxy):
-                    color = np.array(self.track_colors[color_idx][::-1], dtype=np.float64) / 255.0
-                    print(color)
-                    # plt.plot([p1[0], p2[0]], [p1[1], p2[1]], marker='o', linestyle='solid', linewidth=2.0, color=color)
+                    color = np.array(self.track_colors[color_idx][::-1], dtype=np.float64)
+                    # plt.plot([p1[0], p2[0]], [p1[1], p2[1]], marker='o', linestyle='solid', linewidth=2.0, color=color)  / 255.0
                     cv2.line(visim, (p1[0],p1[1]),(p2[0],p2[1]), color, 5)
 
 

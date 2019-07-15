@@ -77,6 +77,7 @@ def callback():
 
     # person_x_old = 0
 
+
     while not rospy.is_shutdown():
 
         rospy.loginfo("Getting image...")
@@ -123,8 +124,8 @@ def callback():
         wave_person = []
         for pidx in range(person_conf_multi.shape[0]):
 
-            cv2.circle(image, (int(person_conf_multi[pidx, 9, 0]),int(person_conf_multi[pidx, 9, 1])), 1, (255,255,255), -1)
-            cv2.circle(image, (int(person_conf_multi[pidx, 10, 0]),int(person_conf_multi[pidx, 10, 1])), 1, (255,255,255), -1)
+            # cv2.circle(image, (int(person_conf_multi[pidx, 9, 0]),int(person_conf_multi[pidx, 9, 1])), 1, (255,255,255), -1)
+            # cv2.circle(image, (int(person_conf_multi[pidx, 10, 0]),int(person_conf_multi[pidx, 10, 1])), 1, (255,255,255), -1)
 
             # shoudler, elbow, wrist
             if (person_conf_multi[pidx, 5, 0] != 0 and person_conf_multi[pidx, 5, 1] != 0 \
@@ -165,7 +166,7 @@ def callback():
                         msg.x = x
                         msg.y = y
                         image_pose_pub.publish(msg)
-                        person_pose_client(x, y)
+                        point3D = person_pose_client(x, y)
                         
                         cv2.putText(image, str(person_pose), (int(x),int(y)), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,255,255), 2, cv2.LINE_AA)
 
