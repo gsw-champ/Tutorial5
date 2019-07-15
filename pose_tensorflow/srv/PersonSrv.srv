@@ -1,0 +1,4 @@
+std_msgs/Empty  request
+---
+float32 x
+float32 y
